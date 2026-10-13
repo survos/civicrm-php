@@ -107,7 +107,7 @@ final class CiviCrmClient implements CiviCrmClientInterface
     {
         $attempts = \in_array($action, self::RETRYABLE_ACTIONS, true) ? max(1, $this->maxAttempts) : 1;
 
-        for ($attempt = 1; ; ++$attempt) {
+        for ($attempt = 1;; ++$attempt) {
             try {
                 return $this->attempt($entity, $action, $params);
             } catch (CiviCrmApiException $e) {
@@ -164,7 +164,7 @@ final class CiviCrmClient implements CiviCrmClientInterface
         try {
             $response = $this->http->request('POST', $url, [
                 'headers' => [
-                    'X-Civi-Auth' => 'Bearer ' . $this->apiKey,
+                    'X-Civi-Auth' => 'Bearer '.$this->apiKey,
                     // CiviCRM treats this as the marker of a legitimate API call and will
                     // refuse some routes without it.
                     'X-Requested-With' => 'XMLHttpRequest',
@@ -176,17 +176,9 @@ final class CiviCrmClient implements CiviCrmClientInterface
             $status = $response->getStatusCode();
             $payload = $response->toArray(false);
         } catch (HttpExceptionInterface $e) {
-            throw new CiviCrmApiException(
-                sprintf('%s.%s: transport failure: %s', $entity, $action, $e->getMessage()),
-                CiviCrmApiException::TRANSPORT_FAILURE,
-                $e,
-            );
+            throw new CiviCrmApiException(sprintf('%s.%s: transport failure: %s', $entity, $action, $e->getMessage()), CiviCrmApiException::TRANSPORT_FAILURE, $e);
         } catch (\JsonException $e) {
-            throw new CiviCrmApiException(
-                sprintf('%s.%s: parameters are not encodable', $entity, $action),
-                CiviCrmApiException::NOT_ENCODABLE,
-                $e,
-            );
+            throw new CiviCrmApiException(sprintf('%s.%s: parameters are not encodable', $entity, $action), CiviCrmApiException::NOT_ENCODABLE, $e);
         }
 
         /*
@@ -195,12 +187,7 @@ final class CiviCrmClient implements CiviCrmClientInterface
          * does not exist" into an empty result set.
          */
         if (isset($payload['error_message'])) {
-            throw new CiviCrmApiException(sprintf(
-                '%s.%s: %s',
-                $entity,
-                $action,
-                (string) $payload['error_message'],
-            ), (int) ($payload['error_code'] ?? null ?: $status));
+            throw new CiviCrmApiException(sprintf('%s.%s: %s', $entity, $action, (string) $payload['error_message']), (int) ($payload['error_code'] ?? null ?: $status));
         }
 
         if ($status >= 400) {
